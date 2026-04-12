@@ -5,6 +5,7 @@ import { OpenAiProvider } from "@repo/ai";
 import { TelegramBot } from "@repo/telegram";
 
 import { createLocationHandler, startCommand } from "./middleware/index.js";
+import { setupBot } from "./setup.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,4 +26,5 @@ tg.bot.use(startCommand);
 tg.bot.use(createLocationHandler(ai));
 tg.bot.on("message", (ctx) => ctx.reply("Got another message!"));
 
+await setupBot(tg.bot);
 tg.bot.start();

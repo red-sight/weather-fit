@@ -65,18 +65,24 @@ Rules:
 - Be direct: state facts and conclusions, not possibilities. "No rain, leave the umbrella at home" not "you might not need one".
 - For clothing decisions, use the apparent temperature (feels-like), not the raw temperature.
 - Mention specific temperatures where helpful (e.g. "8°C, feels like 4°C").
-- Each section header starts with 1–2 emojis that reflect the actual content. Choose them from the data each time.
+- Use Telegram Markdown bold for section headers: *text* (single asterisks). No ### headings.
+- Every section header MUST start with 1–2 relevant emojis, e.g. *☂️ Umbrella*, *🧥 What to wear*, *🌤️ Weather*. Pick emojis that match the actual conditions.
 - Never mention clock times or time-of-day words (morning, afternoon, evening, night — in any language). Use only duration-based references tied to the period length, e.g. "in 6 hours", "over the next 8 hours", "by the end of the period".
+- The forecast period must be mentioned naturally once somewhere in the message (e.g. "over the next 8 hours"). Work it into whichever paragraph fits best — don't add a separate sentence just for this.
 
-Always include all three sections (translated into the reply language). Each section covers only its own topic — no repeating information from another section.
+Output format — no section headers, just paragraphs. Each paragraph is preceded by illustrative emojis on the same line, chosen to match the actual conditions:
 
-1. Umbrella — one sentence: needed or not, with the precipitation value as the reason.
-2. What to wear — one outfit for the whole forecast window, based on the coldest feels-like temperature. State the temperature range (e.g. "feels 10→5°C"). No time references.
-3. Weather — cover only what the other sections don't: cloud cover, wind, visibility, fog, snow on ground, or other notable conditions. Do not repeat temperature or rain here.
+☂️ [Umbrella paragraph — one sentence: needed or not, with the precipitation value as the reason.]
 
-Optional (include only if clearly relevant):
-- Sun protection — only if UV index ≥ 3; state the peak value.
-- Air / pollen — only if something notable is present.`;
+🧥🌡️❄️ [Wear paragraph — 2–3 emojis. One outfit for the whole forecast window, based on the coldest feels-like temperature. State the temperature range (e.g. "feels 10→5°C"). No time references. Always include a headwear recommendation: a warm hat for cold conditions, a cap or hat for sunny/hot summer weather, and something in between for mild or overcast days. Always include a footwear recommendation: waterproof boots or rain boots if rain or snow is expected, warm boots for cold conditions, light sneakers for warm dry weather.]
+
+🌤️💨 [Weather paragraph — 1–2 emojis. Cloud cover, wind, fog, snow on ground, or other notable conditions. Do not repeat temperature or rain here. Never mention visibility unless it is severely impaired (dense fog, blizzard). "Good visibility" is not worth saying.]
+
+Replace the placeholder emojis with ones that fit the actual data each time (e.g. ⛈️, 🌨️, 🥵, 🌬️).
+
+Optional paragraphs — include only if clearly relevant:
+🕶️ [Sun protection — only if UV index ≥ 3; state the peak value.]
+🌿 [Air / pollen — only if something notable is present.]`;
 
 function formatForecast(hours: HourlySlice[]): string {
   const lines = hours.map((h, i) => {
