@@ -1,6 +1,4 @@
-import type { Bot } from "grammy";
-
-import type { BotContext } from "@repo/telegram";
+import type { Bot, BotContext } from "@repo/telegram";
 
 const BOT_INFO = {
   en: {

@@ -11,18 +11,18 @@
       "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^build"]
     },
     "dev": {
       "cache": false,
       "persistent": true,
-      "env": ["TG_BOT_TOKEN"]
+      "env": ["TG_BOT_TOKEN", "OPENAI_API_KEY"]
     },
     "start": {
       "dependsOn": ["build"],
       "cache": false,
       "persistent": true,
-      "env": ["TG_BOT_TOKEN"]
+      "env": ["TG_BOT_TOKEN", "OPENAI_API_KEY"]
     }
   }
 }
