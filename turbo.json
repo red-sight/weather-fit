@@ -15,7 +15,14 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["TG_BOT_TOKEN"]
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true,
+      "env": ["TG_BOT_TOKEN"]
     }
   }
 }
