@@ -1,0 +1,8 @@
+services:
+  bot:
+    image: ${IMAGE}
+    command: node dist/index.js
+    restart: unless-stopped
+    environment:
+      TG_BOT_TOKEN: ${TG_BOT_TOKEN}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
