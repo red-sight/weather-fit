@@ -18,6 +18,28 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
+  packages/ai:
+    dependencies:
+      openai:
+        specifier: ^6.34.0
+        version: 6.34.0
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.1
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
   packages/eslint-config:
     devDependencies:
       '@eslint/js':
@@ -75,11 +97,35 @@ importers:
 
   packages/typescript-config: {}
 
+  packages/weather:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.1
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
   services/bot:
     dependencies:
+      '@repo/ai':
+        specifier: workspace:^
+        version: link:../../packages/ai
       '@repo/telegram':
         specifier: workspace:*
         version: link:../../packages/telegram
+      '@repo/weather':
+        specifier: workspace:*
+        version: link:../../packages/weather
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -745,6 +791,18 @@ packages:
       encoding: ^0.1.0
     peerDependenciesMeta:
       encoding:
+        optional: true
+
+  openai@6.34.0:
+    resolution: {integrity: sha512-yEr2jdGf4tVFYG6ohmr3pF6VJuveP0EA/sS8TBx+4Eq5NT10alu5zg2dmxMXMgqpihRDQlFGpRt2XwsGj+Fyxw==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
         optional: true
 
   optionator@0.9.4:
@@ -1491,6 +1549,8 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
+
+  openai@6.34.0: {}
 
   optionator@0.9.4:
     dependencies:
