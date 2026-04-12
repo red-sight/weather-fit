@@ -12,9 +12,14 @@ interface HourlyForecast {
   temperature_2m: number[];
   apparent_temperature: number[];
   precipitation: number[];
+  precipitation_probability: number[];
   weathercode: number[];
   windspeed_10m: number[];
+  windgusts_10m: number[];
   relativehumidity_2m: number[];
+  cloudcover: number[];
+  visibility: number[];
+  snow_depth: number[];
   uv_index: number[];
 }
 
@@ -50,14 +55,20 @@ export function createLocationHandler(ai: AiProvider) {
         temperature: hourly.temperature_2m[idx] ?? 0,
         apparentTemperature: hourly.apparent_temperature[idx] ?? 0,
         precipitation: hourly.precipitation[idx] ?? 0,
-        windspeed: hourly.windspeed_10m[idx] ?? 0,
-        humidity: hourly.relativehumidity_2m[idx] ?? 0,
-        uvIndex: hourly.uv_index[idx] ?? 0,
+        precipitationProbability: hourly.precipitation_probability[idx] ?? 0,
         weathercode: hourly.weathercode[idx] ?? 0,
+        windspeed: hourly.windspeed_10m[idx] ?? 0,
+        windgusts: hourly.windgusts_10m[idx] ?? 0,
+        humidity: hourly.relativehumidity_2m[idx] ?? 0,
+        cloudcover: hourly.cloudcover[idx] ?? 0,
+        visibility: hourly.visibility[idx] ?? 0,
+        snowDepth: hourly.snow_depth[idx] ?? 0,
+        uvIndex: hourly.uv_index[idx] ?? 0,
       };
     });
 
-    const reply = await getRecommendations(ai, hours);
+    const locale = ctx.from?.language_code ?? "en";
+    const reply = await getRecommendations(ai, hours, locale);
 
     await ctx.reply(reply, { parse_mode: "Markdown" });
   });

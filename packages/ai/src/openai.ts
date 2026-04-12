@@ -10,7 +10,7 @@ export class OpenAiProvider extends AiProvider {
 
   constructor({
     apiKey,
-    model = "gpt-4o-mini",
+    model = "gpt-4o",
   }: {
     apiKey: string;
     model?: string;

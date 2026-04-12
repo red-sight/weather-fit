@@ -6,9 +6,14 @@ const HOURLY_FIELDS = [
   "temperature_2m",
   "apparent_temperature",
   "precipitation",
+  "precipitation_probability",
   "weathercode",
   "windspeed_10m",
+  "windgusts_10m",
   "relativehumidity_2m",
+  "cloudcover",
+  "visibility",
+  "snow_depth",
   "uv_index",
 ].join(",");
 
