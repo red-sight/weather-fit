@@ -1,8 +1,20 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
   bot:
-    image: ${IMAGE}
+    image: ghcr.io/red-sight/weather-fit
     command: node dist/index.js
     restart: unless-stopped
+    depends_on:
+      - redis
     environment:
       TG_BOT_TOKEN: ${TG_BOT_TOKEN}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      REDIS_URL: redis://redis:6379
+
+volumes:
+  redis_data:
