@@ -1,159 +1,119 @@
-# Turborepo starter
+# Weather-Fit
 
-This Turborepo starter is maintained by the Turborepo core team.
+A Telegram bot that recommends what to wear based on real-time weather at your location.
 
-## Using this example
+## How It Works
 
-Run the following command:
+1. Send `/start` — the bot sends a button to share your location
+2. Share your location — the bot fetches an 8-hour weather forecast
+3. An AI generates a natural-language outfit recommendation in your language
+4. The bot replies with what to wear, tailored to current conditions
 
-```sh
-npx create-turbo@latest
+Languages are detected automatically from your Telegram settings. No account, no sign-up.
+
+## Features
+
+- Real-time weather via [Open-Meteo](https://open-meteo.com/) — free, no API key needed on the weather side
+- AI recommendations via OpenAI (GPT-4o by default, configurable)
+- Responds in the user's language (currently localized for EN and RU)
+- Rate-limited: 3 forecast requests per user per 24 hours
+- Flood protection: 1 request/second per user (silent drop)
+- Redis-backed rate limiting — fails open if Redis is unavailable
+
+## Monorepo Structure
+
+```
+packages/
+  ai/         — @repo/ai      OpenAI provider + outfit recommendation logic
+  weather/    — @repo/weather  Open-Meteo weather fetching
+  telegram/   — @repo/telegram grammy wrapper with Fluent i18n
+  eslint-config/              shared ESLint config
+  typescript-config/          shared tsconfig (strict, ESM, NodeNext)
+
+services/
+  bot/        — @repo/bot     Telegram bot service
 ```
 
-## What's inside?
+## Local Development
 
-This Turborepo includes the following packages/apps:
+**Prerequisites:** Node.js 22+, pnpm, Docker (for Redis)
 
-### Apps and Packages
+```bash
+# 1. Install dependencies
+pnpm install
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+# 2. Configure environment
+cp .env.example .env
+# Fill in TG_BOT_TOKEN and OPENAI_API_KEY
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+# 3. Start Redis
+docker compose up redis -d
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+# 4. Run in watch mode
+pnpm dev
 ```
 
-Without global `turbo`, use your package manager:
+### Environment Variables
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+| Variable | Required | Default | Notes |
+|---|---|---|---|
+| `TG_BOT_TOKEN` | Yes | — | From Telegram [@BotFather](https://t.me/BotFather) |
+| `OPENAI_API_KEY` | Yes | — | OpenAI or compatible API key |
+| `REDIS_URL` | No | `redis://localhost:6379` | Rate-limit persistence |
+| `OPENAI_BASE_URL` | No | — | Custom endpoint or proxy |
+| `OPENAI_MODEL` | No | `openai/gpt-4o` | Any OpenAI-compatible model ID |
+
+### Common Commands
+
+```bash
+pnpm build          # compile all packages
+pnpm dev            # watch mode (all packages)
+pnpm lint           # ESLint — zero warnings allowed
+pnpm check-types    # tsc --noEmit across all packages
+pnpm format         # Prettier
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Target a single package: `pnpm --filter @repo/bot dev`
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Deployment
 
-```sh
-turbo build --filter=docs
+The production image is built automatically by CI on every push to `main` and pushed to GitHub Container Registry (`ghcr.io`).
+
+The Dockerfile uses a multi-stage build: TypeScript is compiled in a builder stage, the runtime stage is minimal Alpine running `node dist/index.js`.
+
+To run in production with Docker Compose:
+
+```bash
+docker compose up -d
 ```
 
-Without global `turbo`:
+Make sure your `.env` (or environment) has `TG_BOT_TOKEN`, `OPENAI_API_KEY`, and `REDIS_URL` set.
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+## Architecture Notes
+
+### Middleware Chain
+
+```
+Telegram message
+  └─ system-limiter      1 req/sec per user — silent drop, in-memory
+      └─ forecast-limiter   3 req/24h per user — notifies user, Redis-backed
+          └─ location.handler  weather → AI → reply
 ```
 
-### Develop
+### Provider Pattern
 
-To develop all apps and packages, run the following command:
+Both AI and weather integrations use an abstract base class with a single method. Swapping providers means implementing the interface and passing the new instance in — no other changes needed.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+### Localization
 
-```sh
-cd my-turborepo
-turbo dev
-```
+User-facing strings live in `services/bot/locales/` as [Fluent](https://projectfluent.org/) `.ftl` files. Locale is selected from `ctx.from.language_code` with `en` as fallback. To add a language, add a new `.ftl` file and register it in the i18n setup.
 
-Without global `turbo`, use your package manager:
+## Tech Stack
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- [grammY](https://grammy.dev/) — Telegram Bot framework
+- [Open-Meteo](https://open-meteo.com/) — weather API (free, no auth)
+- [OpenAI API](https://platform.openai.com/) — language model
+- [Fluent](https://projectfluent.org/) — localization
+- [Turborepo](https://turbo.build/) — monorepo build system
+- [pnpm](https://pnpm.io/) — package manager
+- TypeScript (strict, ESM)
