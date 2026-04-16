@@ -14,6 +14,8 @@ services:
     environment:
       TG_BOT_TOKEN: ${TG_BOT_TOKEN}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      OPENAI_MODEL: ${OPENAI_MODEL}
       REDIS_URL: redis://redis:6379
 
 volumes:
