@@ -91,7 +91,7 @@ function getDayOfYear(date: Date): number {
 function computeSolarContext(
   lat: number,
   lon: number,
-  utcNow: Date
+  utcNow: Date,
 ): { isDaytime: boolean; season: string } {
   const month = utcNow.getUTCMonth(); // 0–11
   const utcHour = utcNow.getUTCHours() + utcNow.getUTCMinutes() / 60;
@@ -102,14 +102,17 @@ function computeSolarContext(
   // Solar declination
   const dayOfYear = getDayOfYear(utcNow);
   const declination =
-    (23.45 * Math.PI) / 180 * Math.sin(((2 * Math.PI) / 365) * (dayOfYear - 81));
+    ((23.45 * Math.PI) / 180) *
+    Math.sin(((2 * Math.PI) / 365) * (dayOfYear - 81));
   const latRad = (lat * Math.PI) / 180;
 
   // Half-day length in hours
   const cosHourAngle = -Math.tan(latRad) * Math.tan(declination);
   let halfDay: number;
-  if (cosHourAngle > 1) halfDay = 0; // polar night
-  else if (cosHourAngle < -1) halfDay = 12; // midnight sun
+  if (cosHourAngle > 1)
+    halfDay = 0; // polar night
+  else if (cosHourAngle < -1)
+    halfDay = 12; // midnight sun
   else halfDay = (Math.acos(cosHourAngle) * 180) / Math.PI / 15;
 
   const sunriseUTC = solarNoonUTC - halfDay;
@@ -117,8 +120,34 @@ function computeSolarContext(
   const isDaytime = utcHour >= sunriseUTC && utcHour <= sunsetUTC;
 
   // Season: use hemisphere-aware mapping
-  const northSeasons = ["winter", "winter", "spring", "spring", "spring", "summer", "summer", "summer", "autumn", "autumn", "autumn", "winter"] as const;
-  const southSeasons = ["summer", "summer", "autumn", "autumn", "autumn", "winter", "winter", "winter", "spring", "spring", "spring", "summer"] as const;
+  const northSeasons = [
+    "winter",
+    "winter",
+    "spring",
+    "spring",
+    "spring",
+    "summer",
+    "summer",
+    "summer",
+    "autumn",
+    "autumn",
+    "autumn",
+    "winter",
+  ] as const;
+  const southSeasons = [
+    "summer",
+    "summer",
+    "autumn",
+    "autumn",
+    "autumn",
+    "winter",
+    "winter",
+    "winter",
+    "spring",
+    "spring",
+    "spring",
+    "summer",
+  ] as const;
   const seasons = lat >= 0 ? northSeasons : southSeasons;
   const season = seasons[month] ?? "unknown";
 
@@ -146,7 +175,7 @@ export async function getRecommendations(
   hours: HourlySlice[],
   locale = "en",
   lat?: number,
-  lon?: number
+  lon?: number,
 ): Promise<string> {
   const forecastText = formatForecast(hours);
 
@@ -156,8 +185,7 @@ export async function getRecommendations(
     const peakUV = Math.max(...hours.map((h) => h.uvIndex));
     const avgCloudCover =
       hours.reduce((sum, h) => sum + h.cloudcover, 0) / hours.length;
-    const sunProtection =
-      isDaytime && peakUV >= 3 && avgCloudCover < 60;
+    const sunProtection = isDaytime && peakUV >= 3 && avgCloudCover < 60;
     solarContext =
       `\nCurrent solar context: ${isDaytime ? "daytime" : "night"}, ${season}.` +
       ` Peak UV: ${peakUV}. Average cloud cover: ${Math.round(avgCloudCover)}%.` +
