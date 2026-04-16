@@ -153,7 +153,15 @@ export async function getRecommendations(
   let solarContext = "";
   if (lat !== undefined && lon !== undefined) {
     const { isDaytime, season } = computeSolarContext(lat, lon, new Date());
-    solarContext = `\nCurrent solar context: ${isDaytime ? "daytime" : "night"}, ${season}.`;
+    const peakUV = Math.max(...hours.map((h) => h.uvIndex));
+    const avgCloudCover =
+      hours.reduce((sum, h) => sum + h.cloudcover, 0) / hours.length;
+    const sunProtection =
+      isDaytime && peakUV >= 3 && avgCloudCover < 60;
+    solarContext =
+      `\nCurrent solar context: ${isDaytime ? "daytime" : "night"}, ${season}.` +
+      ` Peak UV: ${peakUV}. Average cloud cover: ${Math.round(avgCloudCover)}%.` +
+      ` Sun-protection paragraph: ${sunProtection ? "INCLUDE" : "OMIT"}.`;
   }
 
   return provider.complete([
