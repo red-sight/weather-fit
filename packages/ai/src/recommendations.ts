@@ -57,7 +57,7 @@ function formatVisibility(meters: number): string {
   return `${(meters / 1000).toFixed(0)}km`;
 }
 
-const SYSTEM_PROMPT = `You are a weather assistant sending a proactive notification — not answering a question. Write naturally, as if you're informing someone who just shared their location. No command tone, no "here are your recommendations", no filler.
+const SYSTEM_PROMPT = `You are a weather assistant sending a proactive notification — not answering a question. Write naturally, as if you're informing someone who just shared their location. No command tone, no "here are your recommendations", no filler. This is a statement about what lies ahead, not a response to a query.
 
 Rules:
 - All text — including section headers — must be in the reply language. Do not mix languages.
@@ -67,8 +67,7 @@ Rules:
 - Mention specific temperatures where helpful (e.g. "8°C, feels like 4°C").
 - Use Telegram Markdown bold for section headers: *text* (single asterisks). No ### headings.
 - Every section header MUST start with 1–2 relevant emojis, e.g. *☂️ Umbrella*, *🧥 What to wear*, *🌤️ Weather*. Pick emojis that match the actual conditions.
-- Never mention clock times or time-of-day words (morning, afternoon, evening, night — in any language). Use only duration-based references tied to the period length, e.g. "in 6 hours", "over the next 8 hours", "by the end of the period".
-- The forecast period must be mentioned naturally once somewhere in the message (e.g. "over the next 8 hours"). Work it into whichever paragraph fits best — don't add a separate sentence just for this.
+- Never mention the duration of the forecast period or use time-of-day words (morning, afternoon, evening, night — in any language). The header already states the period — do not repeat it. If duration context is needed, use relative phrasing like "later" or "by the end".
 
 Output format — no section headers, just paragraphs. Each paragraph is preceded by illustrative emojis on the same line, chosen to match the actual conditions:
 
@@ -81,8 +80,50 @@ Output format — no section headers, just paragraphs. Each paragraph is precede
 Replace the placeholder emojis with ones that fit the actual data each time (e.g. ⛈️, 🌨️, 🥵, 🌬️).
 
 Optional paragraphs — include only if clearly relevant:
-🕶️ [Sun protection — only if UV index ≥ 3; state the peak value.]
+🕶️ [Sun protection — ONLY include this paragraph if ALL three conditions are met: (1) it is currently daytime at the user's location, (2) peak UV index ≥ 3, AND (3) average cloud cover over the period is below 60%. If it is night, or the sky is mostly cloudy/overcast (cloud cover ≥ 60%), or UV < 3 — omit this paragraph entirely. High UV values in the forecast data are irrelevant when clouds block the sun.]
 🌿 [Air / pollen — only if something notable is present.]`;
+
+function getDayOfYear(date: Date): number {
+  const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
+  return Math.floor((date.getTime() - start.getTime()) / 86_400_000);
+}
+
+function computeSolarContext(
+  lat: number,
+  lon: number,
+  utcNow: Date
+): { isDaytime: boolean; season: string } {
+  const month = utcNow.getUTCMonth(); // 0–11
+  const utcHour = utcNow.getUTCHours() + utcNow.getUTCMinutes() / 60;
+
+  // Approximate solar noon in UTC hours
+  const solarNoonUTC = 12 - lon / 15;
+
+  // Solar declination
+  const dayOfYear = getDayOfYear(utcNow);
+  const declination =
+    (23.45 * Math.PI) / 180 * Math.sin(((2 * Math.PI) / 365) * (dayOfYear - 81));
+  const latRad = (lat * Math.PI) / 180;
+
+  // Half-day length in hours
+  const cosHourAngle = -Math.tan(latRad) * Math.tan(declination);
+  let halfDay: number;
+  if (cosHourAngle > 1) halfDay = 0; // polar night
+  else if (cosHourAngle < -1) halfDay = 12; // midnight sun
+  else halfDay = (Math.acos(cosHourAngle) * 180) / Math.PI / 15;
+
+  const sunriseUTC = solarNoonUTC - halfDay;
+  const sunsetUTC = solarNoonUTC + halfDay;
+  const isDaytime = utcHour >= sunriseUTC && utcHour <= sunsetUTC;
+
+  // Season: use hemisphere-aware mapping
+  const northSeasons = ["winter", "winter", "spring", "spring", "spring", "summer", "summer", "summer", "autumn", "autumn", "autumn", "winter"] as const;
+  const southSeasons = ["summer", "summer", "autumn", "autumn", "autumn", "winter", "winter", "winter", "spring", "spring", "spring", "summer"] as const;
+  const seasons = lat >= 0 ? northSeasons : southSeasons;
+  const season = seasons[month] ?? "unknown";
+
+  return { isDaytime, season };
+}
 
 function formatForecast(hours: HourlySlice[]): string {
   const lines = hours.map((h, i) => {
@@ -103,17 +144,24 @@ function formatForecast(hours: HourlySlice[]): string {
 export async function getRecommendations(
   provider: AiProvider,
   hours: HourlySlice[],
-  locale = "en"
+  locale = "en",
+  lat?: number,
+  lon?: number
 ): Promise<string> {
   const forecastText = formatForecast(hours);
+
+  let solarContext = "";
+  if (lat !== undefined && lon !== undefined) {
+    const { isDaytime, season } = computeSolarContext(lat, lon, new Date());
+    solarContext = `\nCurrent solar context: ${isDaytime ? "daytime" : "night"}, ${season}.`;
+  }
 
   return provider.complete([
     {
       role: "system",
       content:
         `${SYSTEM_PROMPT}\n\n` +
-        `The forecast covers the next ${hours.length} hours. Use this number for duration references.\n` +
-        `Reply in the language with ISO code: "${locale}". Use correct grammar and natural phrasing for that language.`,
+        `Reply in the language with ISO code: "${locale}". Use correct grammar and natural phrasing for that language.${solarContext}`,
     },
     { role: "user", content: forecastText },
   ]);
