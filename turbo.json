@@ -14,15 +14,28 @@
       "dependsOn": ["^build"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
-      "env": ["TG_BOT_TOKEN", "OPENAI_API_KEY", "REDIS_URL"]
+      "env": [
+        "TG_BOT_TOKEN",
+        "OPENAI_API_KEY",
+        "REDIS_URL",
+        "OPENAI_MODEL",
+        "OPENAI_BASE_URL"
+      ]
     },
     "start": {
       "dependsOn": ["build"],
       "cache": false,
       "persistent": true,
-      "env": ["TG_BOT_TOKEN", "OPENAI_API_KEY", "REDIS_URL"]
+      "env": [
+        "TG_BOT_TOKEN",
+        "OPENAI_API_KEY",
+        "REDIS_URL",
+        "OPENAI_MODEL",
+        "OPENAI_BASE_URL"
+      ]
     }
   }
 }

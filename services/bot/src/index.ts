@@ -21,7 +21,14 @@ if (!token) throw new Error("TG_BOT_TOKEN is required");
 const openaiApiKey = process.env["OPENAI_API_KEY"];
 if (!openaiApiKey) throw new Error("OPENAI_API_KEY is required");
 
-const ai = new OpenAiProvider({ apiKey: openaiApiKey });
+const openAiBaseUrl = process.env["OPENAI_BASE_URL"];
+const openAiModel = process.env["OPENAI_MODEL"];
+
+const ai = new OpenAiProvider({
+  apiKey: openaiApiKey,
+  baseURL: openAiBaseUrl,
+  model: openAiModel,
+});
 
 await redis.connect();
 

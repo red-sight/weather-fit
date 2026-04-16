@@ -10,14 +10,17 @@ export class OpenAiProvider extends AiProvider {
 
   constructor({
     apiKey,
-    model = "gpt-4o",
+    model = "openai/gpt-4o",
+    baseURL,
   }: {
     apiKey: string;
     model?: string;
+    baseURL?: string;
   }) {
     super();
-    this.client = new OpenAI({ apiKey });
+    this.client = new OpenAI({ ...(baseURL && { baseURL }), apiKey });
     this.model = model;
+    console.log("Selected OpenAI configuration", { baseURL, model });
   }
 
   async complete(messages: Message[]): Promise<string> {
