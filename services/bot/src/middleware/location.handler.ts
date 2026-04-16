@@ -68,9 +68,10 @@ export function createLocationHandler(ai: AiProvider) {
     });
 
     const locale = ctx.from?.language_code ?? "en";
-    const reply = await getRecommendations(ai, hours, locale);
+    const reply = await getRecommendations(ai, hours, locale, latitude, longitude);
+    const header = ctx.t("forecast-header", { hours: PERIOD_HOURS });
 
-    await ctx.reply(reply, { parse_mode: "Markdown" });
+    await ctx.reply(`*${header}*\n\n${reply}`, { parse_mode: "Markdown" });
   });
 
   return composer;
