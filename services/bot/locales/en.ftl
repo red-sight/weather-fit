@@ -6,3 +6,5 @@ share-location = Share my location
 forecast-header = Recommendations for the next { $hours } hours
 
 forecast-limit-exceeded = You've used all 3 forecast requests for today. Try again in { $resetIn }.
+
+forecast-error = Sorry, I couldn't fetch the forecast right now. Please try again in a moment.

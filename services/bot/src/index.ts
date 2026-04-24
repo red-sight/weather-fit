@@ -47,5 +47,9 @@ tg.bot.use(createForecastLimiter(redis));
 
 tg.bot.use(createLocationHandler(ai));
 
+tg.bot.catch((err) => {
+  console.error("Unhandled bot error:", err);
+});
+
 await setupBot(tg.bot);
 tg.bot.start();

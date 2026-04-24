@@ -9,6 +9,9 @@ services:
     image: ghcr.io/red-sight/weather-fit
     command: node dist/index.js
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     depends_on:
       - redis
     environment:

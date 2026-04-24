@@ -34,11 +34,18 @@ export function createLocationHandler(ai: AiProvider) {
   composer.on("message:location", async (ctx) => {
     const { latitude, longitude } = ctx.message.location;
 
-    const forecast = (await weather.request({
-      lattitude: latitude,
-      langitude: longitude,
-      period: PERIOD_SECONDS,
-    })) as ForecastResponse;
+    let forecast: ForecastResponse;
+    try {
+      forecast = (await weather.request({
+        lattitude: latitude,
+        langitude: longitude,
+        period: PERIOD_SECONDS,
+      })) as ForecastResponse;
+    } catch (err) {
+      console.error("Weather fetch failed:", err);
+      await ctx.reply(ctx.t("forecast-error"));
+      return;
+    }
 
     const { hourly } = forecast;
 
@@ -67,8 +74,16 @@ export function createLocationHandler(ai: AiProvider) {
       };
     });
 
-    const locale = ctx.from?.language_code ?? "en";
-    const reply = await getRecommendations(ai, hours, locale, latitude, longitude);
+    let reply: string;
+    try {
+      const locale = ctx.from?.language_code ?? "en";
+      reply = await getRecommendations(ai, hours, locale, latitude, longitude);
+    } catch (err) {
+      console.error("AI recommendation failed:", err);
+      await ctx.reply(ctx.t("forecast-error"));
+      return;
+    }
+
     const header = ctx.t("forecast-header", { hours: PERIOD_HOURS });
 
     await ctx.reply(`*${header}*\n\n${reply}`, { parse_mode: "Markdown" });
